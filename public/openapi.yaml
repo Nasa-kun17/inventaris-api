@@ -15,7 +15,41 @@ paths:
   /api/v1/products:
     get:
       tags: [Products]
-      summary: Mengambil seluruh produk
+      summary: Mengambil seluruh produk (dengan pencarian, filter, dan pagination)
+      description: >
+        Mendukung pencarian produk berdasarkan nama (search), filter
+        berdasarkan kategori (category_id), serta pagination (page & limit).
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Mencari produk berdasarkan nama (pencarian parsial)
+          schema:
+            type: string
+        - name: category_id
+          in: query
+          required: false
+          description: Memfilter produk berdasarkan ID kategori
+          schema:
+            type: integer
+            minimum: 1
+        - name: page
+          in: query
+          required: false
+          description: Nomor halaman
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Jumlah data per halaman (maksimal 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
       responses:
         '200':
           description: Daftar produk berhasil diambil
@@ -91,6 +125,41 @@ paths:
           description: Produk berhasil dihapus
         '404':
           description: Produk tidak ditemukan
+  /api/v1/products/{id}/stock:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    patch:
+      tags: [Products]
+      summary: Mengurangi stok produk
+      description: >
+        Mengurangi stok produk sebanyak qty. Qty harus lebih besar dari 0
+        dan tidak boleh melebihi stok yang tersedia.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockUpdateInput'
+      responses:
+        '200':
+          description: Stok produk berhasil dikurangi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: Produk tidak ditemukan
+        '422':
+          description: Qty tidak valid atau stok tidak mencukupi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/categories:
     get:
       tags: [Categories]
@@ -211,6 +280,29 @@ components:
           properties:
             id:
               type: integer
+    StockUpdateInput:
+      type: object
+      required: [qty]
+      properties:
+        qty:
+          type: integer
+          minimum: 1
+          description: Jumlah stok yang akan dikurangi
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 3
     ProductResponse:
       type: object
       properties:
@@ -227,6 +319,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
     CategoryResponse:
       type: object
       properties:

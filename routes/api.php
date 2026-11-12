@@ -21,4 +21,5 @@ return function (
     $router->add('POST', '/api/v1/categories', [$categories, 'store']);
     $router->add('PUT', '/api/v1/categories/{id}', [$categories, 'update']);
     $router->add('DELETE', '/api/v1/categories/{id}', [$categories, 'destroy']);
+    $router->add('PATCH', '/api/v1/products/{id}/stock', [$products, 'reduceStock']);
 };
